@@ -1,7 +1,7 @@
 
 import { useReducer } from 'react'
 import './App.css'
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 interface State {
   count:number,
   error:string | null
@@ -41,25 +41,51 @@ function reducer(state: State, action:Action){
 function App() {
    const [state, disptach] = useReducer(reducer, { count:0, error:null });
 
+   const queryClient = useQueryClient();
+
    const { data, error, isLoading } = useQuery({
-    queryKey:['todo'], 
+    queryKey:['posts'], 
     queryFn: () =>
-    fetch('https://jsonplaceholder.typicode.com/todos/').then((res) =>
+    fetch('https://jsonplaceholder.typicode.com/posts/').then((res) =>
       res.json(),
     ),
   })
 
-  console.log(data)
+  const {mutate, isPending, isError, isSuccess} = useMutation({
+    mutationFn:(newPost) =>
+      fetch('https://jsonplaceholder.typicode.com/posts/', {
+        method: "POST",
+        body: JSON.stringify(newPost),
+        headers:{"Content-type": "application/json; charset=UTF-8"}
+      }).then((res)=>res.json()),
+      onSucces:() => {
+        queryClient.invalidateQueries({ queryKey:['posts']} );
+      }
+    
+  });
 
-  if(error) return <div> There was an error</div>
-  if(isLoading) return <div> Data is loading</div>
+  if(error || isError) return <div> There was an error</div>
+  if(isLoading || isPending) return <div> Data is loading</div>
   return (
     <div className='tutorial'>
+      <button onClick={()=>{
+        mutate({
+            userId: 5000,
+            id: 4000,
+            title:'This is new post from react app',
+            body:"This is the body from new post"
+        })
+      }
+      }> 
+      Add post 
+      </button>
 
-        {data?.map((todo) => (
+
+        {data?.map((post) => (
           <> 
-          <h1>{todo.id}</h1>
-          <h1>{todo.title}</h1>
+          <h1>{post.id}</h1>
+          <h4>{post.title}</h4>
+          <p>{post.body}</p>
           </>
 
         ))}
