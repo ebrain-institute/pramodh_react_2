@@ -1,7 +1,7 @@
 
 import { useReducer } from 'react'
 import './App.css'
-
+import { useQuery } from "@tanstack/react-query"
 interface State {
   count:number,
   error:string | null
@@ -34,12 +34,39 @@ function reducer(state: State, action:Action){
     }
   }
 }
+//https://jsonplaceholder.typicode.com/todos/
+
+
+
 function App() {
    const [state, disptach] = useReducer(reducer, { count:0, error:null });
+
+   const { data, error, isLoading } = useQuery({
+    queryKey:['todo'], 
+    queryFn: () =>
+    fetch('https://jsonplaceholder.typicode.com/todos/').then((res) =>
+      res.json(),
+    ),
+  })
+
+  console.log(data)
+
+  if(error) return <div> There was an error</div>
+  if(isLoading) return <div> Data is loading</div>
   return (
     <div className='tutorial'>
 
-        <div>
+        {data?.map((todo) => (
+          <> 
+          <h1>{todo.id}</h1>
+          <h1>{todo.title}</h1>
+          </>
+
+        ))}
+
+
+
+        {/* <div>
           Count: {state.count}
         </div>
         {state.error && <div> {state.error} </div>}
@@ -48,7 +75,9 @@ function App() {
         </button>
         <button onClick={()=>disptach({type:'decrement'})}>
           Decrement
-        </button>
+        </button> */}
+
+
 
 
     </div>
