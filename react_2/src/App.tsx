@@ -1,5 +1,5 @@
 
-import { useReducer } from 'react'
+// import { useReducer } from 'react'
 import './App.css'
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 interface State {
@@ -39,27 +39,31 @@ function reducer(state: State, action:Action){
 
 
 function App() {
-   const [state, disptach] = useReducer(reducer, { count:0, error:null });
+  //  const [state, disptach] = useReducer(reducer, { count:0, error:null });
 
    const queryClient = useQueryClient();
 
    const { data, error, isLoading } = useQuery({
     queryKey:['posts'], 
     queryFn: () =>
-    fetch('https://jsonplaceholder.typicode.com/posts/').then((res) =>
+    fetch('https://jsonplaceholder.typicode.com/posts').then((res) =>
       res.json(),
-    ),
+    ),    
+    staleTime:4000,
+    refetchInterval:3000,
+    gcTime:10000
   })
 
   const {mutate, isPending, isError, isSuccess} = useMutation({
     mutationFn:(newPost) =>
-      fetch('https://jsonplaceholder.typicode.com/posts/', {
+      fetch('https://jsonplaceholder.typicode.com/posts', {
         method: "POST",
         body: JSON.stringify(newPost),
         headers:{"Content-type": "application/json; charset=UTF-8"}
       }).then((res)=>res.json()),
-      onSucces:() => {
-        queryClient.invalidateQueries({ queryKey:['posts']} );
+      onSuccess:(newPost) => {
+        // queryClient.invalidateQueries({ queryKey:['posts']} );
+        queryClient.setQueryData(['posts'],  (oldPost)=>[...oldPost, newPost])
       }
     
   });
